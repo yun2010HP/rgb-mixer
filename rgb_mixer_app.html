@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RGB三原色ミキサー</title>
+<style>
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;margin:0;background:#f4f4f4;color:#222}
+  header{padding:18px 22px;background:#111;color:white}
+  main{display:grid;grid-template-columns:320px 1fr;gap:18px;padding:18px}
+  .panel,.view{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 10px #0002}
+  label{display:block;margin:14px 0 6px;font-weight:700}
+  input[type=range]{width:100%}
+  .value{float:right;font-weight:400}
+  button{padding:10px 12px;border:0;border-radius:10px;background:#222;color:white;cursor:pointer;margin-top:12px}
+  canvas{background:#000;border:1px solid #ddd;max-width:100%;image-rendering:auto}
+  .row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+  .sample{width:120px;height:120px;border:1px solid #ccc;background:white}
+  small{color:#666}
+</style>
+</head>
+<body>
+<header><h1>RGB三原色ミキサー</h1><div>赤・緑・青の光を混ぜると、縮小表示では別の色に見える教材アプリ</div></header>
+<main>
+<section class="panel">
+  <label>赤 R <span class="value" id="rv">255</span></label><input id="r" type="range" min="0" max="255" value="255">
+  <label>緑 G <span class="value" id="gv">255</span></label><input id="g" type="range" min="0" max="255" value="255">
+  <label>青 B <span class="value" id="bv">255</span></label><input id="b" type="range" min="0" max="255" value="255">
+  <label>線の太さ <span class="value" id="wv">4 px</span></label><input id="w" type="range" min="1" max="20" value="4">
+  <label>縮小率 <span class="value" id="sv">12%</span></label><input id="scale" type="range" min="2" max="100" value="12">
+  <button onclick="preset(255,255,255)">白になる例</button>
+  <button onclick="preset(255,255,0)">黄になる例</button>
+  <button onclick="preset(0,255,255)">シアンになる例</button>
+  <button onclick="preset(255,0,255)">マゼンタになる例</button>
+  <button onclick="preset(255,120,0)">オレンジっぽい例</button>
+  <p><small>授業では「拡大表示」でRGBの縞を見せ、その後「縮小表示」を見せると、目や画面処理で色が混ざって見えることを説明できます。</small></p>
+</section>
+<section class="view">
+  <div class="row">
+    <div><h2>拡大表示：RGBの線が見える</h2><canvas id="big" width="600" height="360"></canvas></div>
+    <div><h2>縮小表示：混ざって見える</h2><canvas id="small" width="600" height="360"></canvas></div>
+    <div><h2>平均色</h2><div class="sample" id="sample"></div><p id="rgbText"></p></div>
+  </div>
+</section>
+</main>
+<script>
+const ids=['r','g','b','w','scale'];
+ids.forEach(id=>document.getElementById(id).addEventListener('input',draw));
+function preset(r,g,b){document.getElementById('r').value=r;document.getElementById('g').value=g;document.getElementById('b').value=b;draw();}
+function draw(){
+  const r=+document.getElementById('r').value, g=+document.getElementById('g').value, b=+document.getElementById('b').value;
+  const w=+document.getElementById('w').value, scale=+document.getElementById('scale').value/100;
+  rv.textContent=r; gv.textContent=g; bv.textContent=b; wv.textContent=w+' px'; sv.textContent=Math.round(scale*100)+'%';
+  const big=document.getElementById('big'), bc=big.getContext('2d');
+  bc.clearRect(0,0,big.width,big.height);
+  const cols=[`rgb(${r},0,0)`,`rgb(0,${g},0)`,`rgb(0,0,${b})`];
+  for(let x=0,i=0;x<big.width;x+=w,i++){bc.fillStyle=cols[i%3];bc.fillRect(x,0,w,big.height);}
+  const small=document.getElementById('small'), sc=small.getContext('2d');
+  sc.clearRect(0,0,small.width,small.height); sc.imageSmoothingEnabled=true; sc.imageSmoothingQuality='high';
+  const tw=Math.max(1,Math.round(big.width*scale)), th=Math.max(1,Math.round(big.height*scale));
+  const off=document.createElement('canvas'); off.width=tw; off.height=th;
+  const oc=off.getContext('2d'); oc.imageSmoothingEnabled=true; oc.imageSmoothingQuality='high'; oc.drawImage(big,0,0,tw,th);
+  sc.drawImage(off,0,0,tw,th,0,0,small.width,small.height);
+  const ar=Math.round(r/3), ag=Math.round(g/3), ab=Math.round(b/3);
+  sample.style.background=`rgb(${ar},${ag},${ab})`; rgbText.textContent=`平均色：RGB(${ar}, ${ag}, ${ab})`;
+}
+draw();
+</script>
+</body>
+</html>
